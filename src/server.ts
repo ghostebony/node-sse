@@ -117,3 +117,47 @@ export class Server {
 		`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${JSON.stringify(data)}\n\n`;
 	};
 }
+
+export abstract class ServerManager {
+	public static rooms = new Map<Room, Server>();
+
+	public static addRoom = (room: Room) => {
+		if (this.hasRoom(room)) {
+			return this.getRoom(room)!;
+		}
+
+		const server = new Server(room);
+
+		this.rooms.set(room, server);
+
+		return server;
+	};
+
+	public static hasRoom = (room: Room) => this.rooms.has(room);
+
+	public static getRoom = (room: Room) => this.rooms.get(room);
+
+	public static delRoom = (room: Room) => this.rooms.delete(room);
+
+	public static sendMultiRoomChannel = (
+		rooms: Room[],
+		user: User,
+		id: MessageId | null,
+		channel: Channel,
+		data?: MessageData
+	) => {
+		for (const room of rooms) {
+			this.rooms.get(room)?.send(user, id, channel, data);
+		}
+	};
+
+	public static sendEveryoneMultiRoomChannel = (
+		rooms: Room[],
+		channel: Channel,
+		data?: MessageData
+	) => {
+		for (const room of rooms) {
+			this.rooms.get(room)?.sendEveryone(channel, data);
+		}
+	};
+}
