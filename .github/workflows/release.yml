@@ -1,0 +1,48 @@
+name: Publish to NPM
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    if: ${{ !github.event.repository.is_template }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.2.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+          cache: pnpm
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # - name: Lint code
+      #   run: pnpm lint
+
+      # - name: Test code
+      #   run: pnpm test
+
+      - name: Build package
+        run: pnpm build
+
+      - name: Copy files
+        run: |
+          cp package.json dist/
+          cp README.md dist/
+          cp LICENSE dist/
+
+      - name: Publish package
+        run: pnpm publish dist/ --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
