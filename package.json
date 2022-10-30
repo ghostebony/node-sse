@@ -5,8 +5,8 @@
 	"type": "module",
 	"author": "Pedro Américo",
 	"license": "MIT",
-	"description": "typescript package template",
 	"repository": "github:ghostebony/sse",
+	"description": "Server-sent events server (response) and client",
 	"keywords": [],
 	"scripts": {
 		"preinstall": "npx only-allow pnpm",
