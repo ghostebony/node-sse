@@ -1,12 +1,12 @@
 {
-	"name": "typescript-package-template",
+	"name": "@ghostebony/sse",
 	"version": "0.0.0",
 	"main": "index.js",
 	"type": "module",
 	"author": "Pedro Américo",
 	"license": "MIT",
-	"repository": "github:ghostebony/typescript-package-template",
 	"description": "typescript package template",
+	"repository": "github:ghostebony/sse",
 	"keywords": [],
 	"scripts": {
 		"preinstall": "npx only-allow pnpm",
