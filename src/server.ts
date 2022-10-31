@@ -113,9 +113,8 @@ export class Server {
 	public ping = (controller: Controller) =>
 		controller.enqueue(this.message(null, "ping", Date.now()));
 
-	private message = (id: MessageId | null, channel: Channel, data: MessageData | number = {}) => {
+	private message = (id: MessageId | null, channel: Channel, data: MessageData | number = {}) =>
 		`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${JSON.stringify(data)}\n\n`;
-	};
 }
 
 export abstract class ServerManager {
