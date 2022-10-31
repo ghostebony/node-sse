@@ -34,11 +34,11 @@ export class Server {
 			start: async (_) => {
 				controller = _;
 
+				this.ping(controller);
+
 				this.addController(user, controller);
 
 				on?.connect?.({ user, controller });
-
-				this.ping(controller);
 
 				ping = setInterval(() => {
 					try {
