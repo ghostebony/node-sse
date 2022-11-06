@@ -15,7 +15,7 @@
 		"build:watch": "tsc --build --watch",
 		"build:clean": "pnpm clean && pnpm build"
 	},
-	"packageManager": "pnpm@7.14.1",
+	"packageManager": "pnpm@7.14.2",
 	"engines": {
 		"pnpm": "^7.0.0"
 	},
