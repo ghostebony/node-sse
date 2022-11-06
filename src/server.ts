@@ -146,6 +146,9 @@ export abstract class ServerManager {
 		data?: MessageData
 	) => this.getRoom(room)?.send(user, id, channel, data);
 
+	public static sendRoomEveryone = (room: Room, channel: Channel, data?: MessageData) =>
+		this.getRoom(room)?.sendEveryone(channel, data);
+
 	public static sendMultiRoomChannel = (
 		rooms: Room[],
 		user: User,
