@@ -110,7 +110,7 @@ export class Server {
 		}
 	};
 
-	public ping = (controller: Controller) =>
+	protected ping = (controller: Controller) =>
 		controller.enqueue(this.message(null, "ping", Date.now()));
 
 	private message = (id: MessageId | null, channel: Channel, data: MessageData | number = {}) =>
