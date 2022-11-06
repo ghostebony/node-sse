@@ -138,6 +138,14 @@ export abstract class ServerManager {
 
 	public static delRoom = (room: Room) => this.rooms.delete(room);
 
+	public static sendRoom = (
+		room: Room,
+		user: User,
+		id: MessageId | null,
+		channel: Channel,
+		data?: MessageData
+	) => this.getRoom(room)?.send(user, id, channel, data);
+
 	public static sendMultiRoomChannel = (
 		rooms: Room[],
 		user: User,
