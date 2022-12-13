@@ -1,5 +1,7 @@
 import type { Channel, Controller, MessageData, MessageId, OnAction, Room, User } from "./types";
 
+const textEncoder = new TextEncoder();
+
 export class Server {
 	public users = new Map<User, Set<Controller>>();
 
@@ -114,7 +116,9 @@ export class Server {
 		controller.enqueue(this.message(null, "ping", Date.now()));
 
 	private message = (id: MessageId | null, channel: Channel, data: MessageData | number = {}) =>
-		`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${JSON.stringify(data)}\n\n`;
+		textEncoder.encode(
+			`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${JSON.stringify(data)}\n\n`
+		);
 }
 
 export abstract class ServerManager {
