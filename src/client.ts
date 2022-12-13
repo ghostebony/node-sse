@@ -1,12 +1,14 @@
 import type { Listener } from "./types";
 
-export class Client extends EventSource {
+export class Client {
+	public readonly source: EventSource;
+
 	public constructor({
-		eventSource,
+		source: { url, init },
 		listeners,
 		on,
 	}: {
-		eventSource: { url: string; eventSourceInitDict?: EventSourceInit };
+		source: { url: string; init?: EventSourceInit };
 		listeners: Listener[];
 		on?: {
 			error?: (this: EventSource, event: globalThis.Event) => any;
@@ -14,10 +16,10 @@ export class Client extends EventSource {
 			message?: Exclude<Listener, "channel" | "options">;
 		};
 	}) {
-		super(eventSource.url, eventSource.eventSourceInitDict);
+		this.source = new EventSource(url, init);
 
 		for (const { channel, listener, parseJson, options } of listeners) {
-			this.addEventListener(
+			this.source.addEventListener(
 				channel,
 				(e) =>
 					listener({
@@ -28,16 +30,20 @@ export class Client extends EventSource {
 			);
 		}
 
-		this.onerror = on?.error ?? null;
+		this.source.onerror = on?.error ?? null;
 
-		this.onopen = on?.open ?? null;
+		this.source.onopen = on?.open ?? null;
 
 		if (on?.message) {
-			this.onmessage = (e) =>
+			this.source.onmessage = (e) =>
 				on.message?.listener({
 					...e,
 					data: on.message.parseJson ? JSON.parse(e.data) : e.data,
 				});
 		}
+	}
+
+	public close() {
+		return this.source.close();
 	}
 }
