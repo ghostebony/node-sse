@@ -1,34 +1,58 @@
 # @ghostebony/sse
 
+## Installation
+
+With npm:
+
+```
+npm i @ghostebony/sse
+```
+
+With yarn:
+
+```
+yarn add @ghostebony/sse
+```
+
+With pnpm:
+
+```
+pnpm add @ghostebony/sse
+```
+
+## Examples
+
+### SvelteKit
+
 #### client
 
 `src/+(page|layout).svelte`
 
 ```svelte
 <script>
-	import { onMount } from "svelte";
-	import { Client } from "@ghostebony/sse/client";
+    import { onMount } from "svelte";
+    import { Client } from "@ghostebony/sse/client";
 
-	let eventSource: Client;
+    let eventSource: Client;
 
-	onMount(async () => {
-		eventSource = new Client({
-			source: { url: "/sse" },
-			listeners: [
-				{
-					channel: "custom-channel",
-					listener: ({ data }) => {
-						console.log(data);
-					},
-					parseJson: true,
-				}
-			],
-		});
+    onMount(async () => {
+        eventSource = new Client({
+            source: { url: "/sse" },
+            listeners: [
+                {
+                    channel: "custom-channel",
+                    listener: ({ data }) => {
+                        console.log(data);
+                    },
+                    parseJson: true,
+                }
+            ],
+        });
 
-		return () => {
-			eventSource.close();
-		};
-	});
+        return () => {
+            eventSource.close();
+        };
+    });
 </script>
 ```
 
@@ -43,14 +67,14 @@ import type { RequestHandler } from "./$types";
 const sse = ServerManager.addRoom("custom-room");
 
 export const GET: RequestHandler = (event) =>
-	sse.server(event.getClientAddress() /* or user id */, {
-		connect: ({ user }) => {
-			// DO SOMETHING
-		},
-		disconnect: ({ user }) => {
-			// DO SOMETHING
-		},
-	});
+    sse.server(event.getClientAddress() /* or user id */, {
+        connect: ({ user }) => {
+            // DO SOMETHING
+        },
+        disconnect: ({ user }) => {
+            // DO SOMETHING
+        },
+    });
 ```
 
 somewhere on the server
@@ -59,10 +83,10 @@ somewhere on the server
 import { ServerManager } from "@ghostebony/sse/server";
 
 ServerManager.sendRoom(
-	"custom-room",
-	clientAddress /* or user id */,
-	1, // message id
-	"custom-channel", // channel that you're listening
-	data // message data
+    "custom-room",
+    clientAddress /* or user id */,
+    1, // message id
+    "custom-channel", // channel that you're listening
+    data // message data
 );
 ```
