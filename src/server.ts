@@ -89,7 +89,7 @@ export class Server {
 		channel: Channel,
 		data: MessageData = {}
 	) => {
-		if (typeof userOrController === "string" || typeof userOrController === "number") {
+		if (!(typeof userOrController === "object")) {
 			const controllers = this.getControllers(userOrController);
 
 			if (controllers) {
