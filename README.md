@@ -29,13 +29,13 @@ pnpm add @ghostebony/sse
 `src/+(page|layout).svelte`
 
 ```svelte
-<script>
-    import { onMount } from "svelte";
+<script lang="ts">
+    import { onDestroy, onMount } from "svelte";
     import { Client } from "@ghostebony/sse/client";
 
     let eventSource: Client;
 
-    onMount(async () => {
+    onMount(() => {
         eventSource = new Client({
             source: { url: "/sse" },
             listeners: [
@@ -48,11 +48,9 @@ pnpm add @ghostebony/sse
                 }
             ],
         });
-
-        return () => {
-            eventSource.close();
-        };
     });
+
+    onDestroy(() => eventSource?.close());
 </script>
 ```
 
