@@ -7,11 +7,11 @@ export class Server {
 
 	public constructor(public room: Room) {}
 
-	public server = (
-		user: User,
+	public server = <TUser extends User>(
+		user: TUser,
 		on?: {
-			connect?: OnAction;
-			disconnect?: OnAction;
+			connect?: OnAction<TUser>;
+			disconnect?: OnAction<TUser>;
 		}
 	) =>
 		new Response(new ReadableStream(this.controller(user, on)), {
@@ -22,11 +22,11 @@ export class Server {
 			},
 		});
 
-	private controller = (
-		user: User,
+	private controller = <TUser extends User>(
+		user: TUser,
 		on?: {
-			connect?: OnAction;
-			disconnect?: OnAction;
+			connect?: OnAction<TUser>;
+			disconnect?: OnAction<TUser>;
 		}
 	): UnderlyingSource<unknown> => {
 		let controller: Controller;
@@ -60,7 +60,11 @@ export class Server {
 		};
 	};
 
-	public cancelController = (user: User, controller: Controller, onDisconnect?: OnAction) => {
+	public cancelController = <TUser extends User>(
+		user: TUser,
+		controller: Controller,
+		onDisconnect?: OnAction<TUser>
+	) => {
 		try {
 			controller.close();
 		} catch {}
@@ -70,7 +74,7 @@ export class Server {
 		this.delController(user, controller);
 	};
 
-	private addController = (user: User, controller: Controller) => {
+	private addController = <TUser extends User>(user: TUser, controller: Controller) => {
 		if (!this.users.has(user)) {
 			this.users.set(user, new Set());
 		}
@@ -78,18 +82,18 @@ export class Server {
 		return this.users.get(user)!.add(controller);
 	};
 
-	private getControllers = (user: User) => this.users.get(user);
+	private getControllers = <TUser extends User>(user: TUser) => this.users.get(user);
 
-	private delController = (user: User, controller: Controller) =>
+	private delController = <TUser extends User>(user: TUser, controller: Controller) =>
 		this.getControllers(user)?.delete(controller);
 
-	public send = (
-		userOrController: User | Controller,
+	public send = <TUser extends User>(
+		userOrController: TUser | Controller,
 		id: MessageId | null,
 		channel: Channel,
 		data: MessageData = {}
 	) => {
-		if (!(typeof userOrController === "object")) {
+		if (typeof userOrController !== "object") {
 			const controllers = this.getControllers(userOrController);
 
 			if (controllers) {
@@ -142,9 +146,9 @@ export abstract class ServerManager {
 
 	public static delRoom = (room: Room) => this.rooms.delete(room);
 
-	public static sendRoom = (
+	public static sendRoom = <TUser extends User>(
 		room: Room,
-		user: User,
+		user: TUser,
 		id: MessageId | null,
 		channel: Channel,
 		data?: MessageData
@@ -153,9 +157,9 @@ export abstract class ServerManager {
 	public static sendRoomEveryone = (room: Room, channel: Channel, data?: MessageData) =>
 		this.getRoom(room)?.sendEveryone(channel, data);
 
-	public static sendMultiRoomChannel = (
+	public static sendMultiRoomChannel = <TUser extends User>(
 		rooms: Room[],
-		user: User,
+		user: TUser,
 		id: MessageId | null,
 		channel: Channel,
 		data?: MessageData

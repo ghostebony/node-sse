@@ -19,4 +19,7 @@ export type MessageId = string | number;
 
 export type MessageData = Record<string | number, any>;
 
-export type OnAction = (connection: { user: User; controller: Controller }) => any;
+export type OnAction<TUser extends User> = (connection: {
+	user: TUser;
+	controller: Controller;
+}) => any;
