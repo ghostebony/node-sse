@@ -5,7 +5,7 @@
 	"type": "module",
 	"author": "Pedro Américo",
 	"license": "MIT",
-	"repository": "github:ghostebony/sse",
+	"repository": "github:ghostebony/node-sse",
 	"description": "Server-sent events server (response) and client",
 	"keywords": [],
 	"scripts": {
