@@ -43,6 +43,6 @@ jobs:
           cp LICENSE dist/
 
       - name: Publish package
-        run: pnpm publish dist/ --no-git-checks --access public
+        run: pnpm publish dist/ --tag next --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
