@@ -24,67 +24,81 @@ pnpm add @ghostebony/sse
 
 ### SvelteKit
 
+#### server
+
+`src/lib/server/sse.ts`
+
+```ts
+import { ServerManager } from "@ghostebony/sse/server";
+
+export type ChannelData = {
+    "custom-channel-1": { id: number; ... };
+    "custom-channel-2": { name: string; ... };
+    ...
+};
+
+export const sse = new ServerManager<ChannelData>();
+```
+
+`src/sse/+server.ts`
+
+```ts
+import { sse } from "$lib/server/sse";
+import type { RequestHandler } from "./$types";
+
+const room = sse.room("custom-room-name");
+
+export const GET: RequestHandler = (event) =>
+	room.server(event.getClientAddress() /* or unique identifier */, {
+		connect({ user }) {
+			...
+		},
+		disconnect({ user }) {
+			...
+		},
+	});
+```
+
+somewhere on the server
+
+```ts
+import { sse } from "$lib/server/sse";
+
+sse.sendRoom(
+	"custom-room-name",
+	clientAddress /* or unique identifier */,
+	1, // message id (can be null)
+	"custom-channel-1", // channel that you're listening
+	data, // message data (types from ChannelData passed to ServerManager)
+);
+```
+
 #### client
 
 `src/+(page|layout).svelte`
 
 ```svelte
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { onMount } from "svelte";
+    import type { ChannelData } from "$lib/server/sse";
     import { Client } from "@ghostebony/sse/client";
 
-    let eventSource: Client;
+    let eventSource: Client<Pick<ChannelData, "custom-channel-1" | ...>>;
 
     onMount(() => {
         eventSource = new Client({
             source: { url: "/sse" },
-            listeners: [
-                {
-                    channel: "custom-channel",
-                    listener: ({ data }) => {
+            listeners: {
+                "custom-channel-1": {
+                    listener({ data }) {
                         console.log(data);
                     },
-                    parseJson: true,
-                }
-            ],
+                },
+                ...
+            },
         });
-    });
 
-    onDestroy(() => eventSource?.close());
+        return () => eventSource?.close();
+    });
 </script>
-```
-
-#### server
-
-`src/sse/+server.ts`
-
-```ts
-import { ServerManager } from "@ghostebony/sse/server";
-import type { RequestHandler } from "./$types";
-
-const sse = ServerManager.addRoom("custom-room");
-
-export const GET: RequestHandler = (event) =>
-    sse.server(event.getClientAddress() /* or user id */, {
-        connect: ({ user }) => {
-            // DO SOMETHING
-        },
-        disconnect: ({ user }) => {
-            // DO SOMETHING
-        },
-    });
-```
-
-somewhere on the server
-
-```ts
-import { ServerManager } from "@ghostebony/sse/server";
-
-ServerManager.sendRoom(
-    "custom-room",
-    clientAddress /* or user id */,
-    1, // message id
-    "custom-channel", // channel that you're listening
-    data // message data
-);
 ```

@@ -1,40 +1,73 @@
-import type { Channel, Controller, MessageData, MessageId, OnAction, Room, User } from "./types";
+import { stringify as devalueStringify } from "devalue";
+import type {
+	Channel,
+	ChannelData,
+	Controller,
+	MessageId,
+	OnAction,
+	RoomName,
+	RoomOptions,
+	Stringify,
+	User,
+} from "./types";
 
 const textEncoder = new TextEncoder();
 
-export class Server {
-	public users = new Map<User, Set<Controller>>();
+abstract class Storage {
+	public static readonly rooms = new Map<RoomName, Room<any>>();
+}
 
-	public constructor(public room: Room) {}
+export class Room<T extends ChannelData> {
+	public readonly users = new Map<User, Set<Controller>>();
 
-	public server = <TUser extends User>(
+	public readonly stringify: Stringify = devalueStringify;
+
+	public readonly pingInterval = 10 * 60000;
+
+	public constructor(
+		public name: RoomName,
+		options?: RoomOptions,
+	) {
+		if (options) {
+			if (options.stringify) {
+				this.stringify = options.stringify;
+			}
+
+			if (options.pingInterval) {
+				this.pingInterval = options.pingInterval;
+			}
+		}
+	}
+
+	public server<TUser extends User>(
 		user: TUser,
 		on?: {
 			connect?: OnAction<TUser>;
 			disconnect?: OnAction<TUser>;
-		}
-	) =>
-		new Response(new ReadableStream(this.controller(user, on)), {
+		},
+	): Response {
+		return new Response(new ReadableStream(this.controller(user, on)), {
 			headers: {
 				connection: "keep-alive",
 				"cache-control": "no-store",
 				"content-type": "text/event-stream",
 			},
 		});
+	}
 
-	private controller = <TUser extends User>(
+	private controller<TUser extends User>(
 		user: TUser,
 		on?: {
 			connect?: OnAction<TUser>;
 			disconnect?: OnAction<TUser>;
-		}
-	): UnderlyingSource<unknown> => {
+		},
+	): UnderlyingSource<unknown> {
 		let controller: Controller;
 		let ping: ReturnType<typeof setInterval>;
 
 		return {
-			start: async (_) => {
-				controller = _;
+			start: async (ctrl) => {
+				controller = ctrl;
 
 				this.ping(controller);
 
@@ -50,7 +83,7 @@ export class Server {
 
 						this.cancelController(user, controller, on?.disconnect);
 					}
-				}, 10 * 60000);
+				}, this.pingInterval);
 			},
 			cancel: () => {
 				clearInterval(ping);
@@ -58,13 +91,13 @@ export class Server {
 				this.cancelController(user, controller, on?.disconnect);
 			},
 		};
-	};
+	}
 
-	public cancelController = <TUser extends User>(
+	public cancelController<TUser extends User>(
 		user: TUser,
 		controller: Controller,
-		onDisconnect?: OnAction<TUser>
-	) => {
+		onDisconnect?: OnAction<TUser>,
+	) {
 		try {
 			controller.close();
 		} catch {}
@@ -72,27 +105,30 @@ export class Server {
 		onDisconnect?.({ user, controller });
 
 		this.delController(user, controller);
-	};
+	}
 
-	private addController = <TUser extends User>(user: TUser, controller: Controller) => {
+	private addController<TUser extends User>(user: TUser, controller: Controller) {
 		if (!this.users.has(user)) {
 			this.users.set(user, new Set());
 		}
 
 		return this.users.get(user)!.add(controller);
-	};
+	}
 
-	private getControllers = <TUser extends User>(user: TUser) => this.users.get(user);
+	private getControllers<TUser extends User>(user: TUser) {
+		return this.users.get(user);
+	}
 
-	private delController = <TUser extends User>(user: TUser, controller: Controller) =>
-		this.getControllers(user)?.delete(controller);
+	private delController<TUser extends User>(user: TUser, controller: Controller) {
+		return this.getControllers(user)?.delete(controller);
+	}
 
-	public send = <TUser extends User>(
+	public send<TUser extends User, TChannel extends Channel>(
 		userOrController: TUser | Controller,
-		id: MessageId | null,
-		channel: Channel,
-		data: MessageData = {}
-	) => {
+		id: MessageId,
+		channel: TChannel,
+		data: T[TChannel],
+	) {
 		if (typeof userOrController !== "object") {
 			const controllers = this.getControllers(userOrController);
 
@@ -108,74 +144,92 @@ export class Server {
 				userOrController.enqueue(this.message(id, channel, data));
 			} catch {}
 		}
-	};
+	}
 
-	public sendEveryone = (channel: Channel, data?: MessageData) => {
+	public sendEveryone<TChannel extends Channel>(channel: TChannel, data: T[TChannel]) {
 		for (const user of this.users.keys()) {
 			this.send(user, null, channel, data);
 		}
-	};
+	}
 
-	protected ping = (controller: Controller) =>
-		controller.enqueue(this.message(null, "ping", Date.now()));
+	protected ping(controller: Controller) {
+		return controller.enqueue(textEncoder.encode(`event: ping\ndata: ${Date.now()}\n\n`));
+	}
 
-	private message = (id: MessageId | null, channel: Channel, data: MessageData | number = {}) =>
-		textEncoder.encode(
-			`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${JSON.stringify(data)}\n\n`
+	private message<TChannel extends Channel>(id: MessageId, channel: TChannel, data: T[TChannel]) {
+		return textEncoder.encode(
+			`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${this.stringify(data)}\n\n`,
 		);
+	}
 }
 
-export abstract class ServerManager {
-	public static rooms = new Map<Room, Server>();
-
-	public static addRoom = (room: Room) => {
-		if (this.hasRoom(room)) {
-			return this.getRoom(room)!;
+export class Server<T extends ChannelData> {
+	/**
+	 * if the room already exists, returns the existent room
+	 */
+	public room(room: RoomName, options?: RoomOptions) {
+		if (Storage.rooms.has(room)) {
+			return Storage.rooms.get(room)!;
 		}
 
-		const server = new Server(room);
+		const server = new Room<T>(room, options);
 
-		this.rooms.set(room, server);
+		Storage.rooms.set(room, server);
 
 		return server;
-	};
+	}
 
-	public static hasRoom = (room: Room) => this.rooms.has(room);
+	public rooms = {
+		has(room: RoomName) {
+			return Storage.rooms.has(room);
+		},
+		get(room: RoomName): Room<T> | undefined {
+			return Storage.rooms.get(room);
+		},
+		delete(room: RoomName) {
+			return Storage.rooms.delete(room);
+		},
+	} as const;
 
-	public static getRoom = (room: Room) => this.rooms.get(room);
-
-	public static delRoom = (room: Room) => this.rooms.delete(room);
-
-	public static sendRoom = <TUser extends User>(
-		room: Room,
+	public sendRoom<TUser extends User, TChannel extends Channel>(
+		room: RoomName,
 		user: TUser,
-		id: MessageId | null,
-		channel: Channel,
-		data?: MessageData
-	) => this.getRoom(room)?.send(user, id, channel, data);
+		id: MessageId,
+		channel: TChannel,
+		data: T[TChannel],
+	) {
+		return Storage.rooms.get(room)?.send(user, id, channel, data);
+	}
 
-	public static sendRoomEveryone = (room: Room, channel: Channel, data?: MessageData) =>
-		this.getRoom(room)?.sendEveryone(channel, data);
+	public sendRoomEveryone<TChannel extends Channel>(
+		room: RoomName,
+		channel: TChannel,
+		data: T[TChannel],
+	) {
+		return Storage.rooms.get(room)?.sendEveryone(channel, data);
+	}
 
-	public static sendMultiRoomChannel = <TUser extends User>(
-		rooms: Room[],
+	public sendMultiRoomChannel<TUser extends User, TChannel extends Channel>(
+		rooms: RoomName[],
 		user: TUser,
-		id: MessageId | null,
-		channel: Channel,
-		data?: MessageData
-	) => {
+		id: MessageId,
+		channel: TChannel,
+		data: T[TChannel],
+	) {
 		for (const room of rooms) {
-			this.rooms.get(room)?.send(user, id, channel, data);
+			Storage.rooms.get(room)?.send(user, id, channel, data);
 		}
-	};
+	}
 
-	public static sendEveryoneMultiRoomChannel = (
-		rooms: Room[],
-		channel: Channel,
-		data?: MessageData
-	) => {
+	public sendEveryoneMultiRoomChannel<TChannel extends Channel>(
+		rooms: RoomName[],
+		channel: TChannel,
+		data: T[TChannel],
+	) {
 		for (const room of rooms) {
-			this.rooms.get(room)?.sendEveryone(channel, data);
+			Storage.rooms.get(room)?.sendEveryone(channel, data);
 		}
-	};
+	}
 }
+
+export { Server as Servinator };
