@@ -5,19 +5,19 @@
 With npm:
 
 ```
-npm i @ghostebony/sse
+npm i @ghostebony/sse@next
 ```
 
 With yarn:
 
 ```
-yarn add @ghostebony/sse
+yarn add @ghostebony/sse@next
 ```
 
 With pnpm:
 
 ```
-pnpm add @ghostebony/sse
+pnpm add @ghostebony/sse@next
 ```
 
 ## Examples
