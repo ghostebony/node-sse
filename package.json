@@ -1,6 +1,6 @@
 {
 	"name": "@ghostebony/sse",
-	"version": "0.1.3",
+	"version": "1.0.0-next.0",
 	"main": "index.js",
 	"type": "module",
 	"author": "Pedro Américo",
