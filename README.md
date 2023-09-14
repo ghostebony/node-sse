@@ -29,7 +29,7 @@ pnpm add @ghostebony/sse@next
 `src/lib/server/sse.ts`
 
 ```ts
-import { ServerManager } from "@ghostebony/sse/server";
+import { Server } from "@ghostebony/sse/server";
 
 export type ChannelData = {
     "custom-channel-1": { id: number; ... };
@@ -37,7 +37,7 @@ export type ChannelData = {
     ...
 };
 
-export const sse = new ServerManager<ChannelData>();
+export const sse = new Server<ChannelData>();
 ```
 
 `src/sse/+server.ts`
