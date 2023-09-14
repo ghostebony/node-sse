@@ -4,7 +4,9 @@ import type { ChannelData, Listeners, Parse } from "./types";
 export class Client<T extends ChannelData> {
 	public readonly source: EventSource;
 
-	public parse: Parse;
+	public readonly parse: Parse;
+
+	private listeners: { [channel: string]: (e: MessageEvent<any>) => void } = {};
 
 	public constructor({
 		source: { url, init },
@@ -27,18 +29,20 @@ export class Client<T extends ChannelData> {
 		for (const channel in listeners) {
 			const { listener, parse } = listeners[channel];
 
+			this.listeners[channel] = (e) => {
+				listener(
+					Object.assign(
+						{
+							data: (parse ?? this.parse)(e.data),
+						},
+						e,
+					),
+				);
+			};
+
 			this.source.addEventListener(
 				channel,
-				(e) => {
-					listener(
-						Object.assign(
-							{
-								data: (parse ?? this.parse)(e.data),
-							},
-							e,
-						),
-					);
-				},
+				this.listeners[channel],
 			);
 		}
 
@@ -48,6 +52,12 @@ export class Client<T extends ChannelData> {
 	}
 
 	public close() {
-		return this.source.close();
+		for (const channel in this.listeners) {
+			this.source.removeEventListener(channel, this.listeners[channel]);
+		}
+
+		this.source.close();
+
+		this.listeners = {};
 	}
 }
