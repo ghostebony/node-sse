@@ -17,7 +17,7 @@ abstract class Storage {
 	public static readonly rooms = new Map<RoomName, Room<any>>();
 }
 
-export class Room<T extends ChannelData> {
+class Room<T extends ChannelData> {
 	public readonly users = new Map<User, Set<Controller>>();
 
 	public readonly stringify: Stringify = devalueStringify;
