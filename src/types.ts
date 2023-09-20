@@ -1,10 +1,10 @@
-export type Parse = (text: string) => any;
+export type Decode = (text: string) => any;
 
-export type Stringify = (data: any) => string;
+export type Encode = (data: any) => string;
 
 export type Listener<T> = {
 	listener: (event: MessageEvent<T>) => void;
-	parse?: Parse;
+	decode?: Decode;
 	// options?: boolean | AddEventListenerOptions;
 };
 
@@ -22,11 +22,22 @@ export type RoomOptions = {
 	/**
 	 * @default devalue.stringify
 	 */
-	stringify?: Stringify;
+	encode?: Encode;
 	/**
 	 * @default 10 * 60000 (every 10 minutes)
 	 */
 	pingInterval?: number;
+};
+
+export type ClientOptions = {
+	decode?: Decode;
+	onError?: (this: EventSource, event: globalThis.Event) => any;
+	onOpen?: (this: EventSource, event: globalThis.Event) => any;
+};
+
+export type ControllerEvents<TUser extends User> = {
+	onConnect?: OnAction<TUser>;
+	onDisconnect?: OnAction<TUser>;
 };
 
 export type User = string | number;

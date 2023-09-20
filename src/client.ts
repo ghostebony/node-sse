@@ -1,54 +1,42 @@
-import { parse as devalueParse } from "devalue";
-import type { ChannelData, Listeners, Parse } from "./types";
+import { parse } from "devalue";
+import type { ChannelData, ClientOptions, Decode, Listeners } from "./types";
 
 export class Client<T extends ChannelData> {
 	public readonly source: EventSource;
 
-	public readonly parse: Parse;
+	public readonly decode: Decode;
 
 	private listeners: { [channel: string]: (e: MessageEvent<any>) => void } = {};
 
-	public constructor({
-		source: { url, init },
-		listeners,
-		parse,
-		on,
-	}: {
-		source: { url: string; init?: EventSourceInit };
-		listeners: Listeners<T>;
-		parse?: Parse;
-		on?: {
-			error?: (this: EventSource, event: globalThis.Event) => any;
-			open?: (this: EventSource, event: globalThis.Event) => any;
-		};
-	}) {
-		this.source = new EventSource(url, init);
+	public constructor(
+		source: { url: string; init?: EventSourceInit },
+		listeners: Listeners<T>,
+		options?: ClientOptions,
+	) {
+		this.source = new EventSource(source.url, source.init);
 
-		this.parse = parse ?? devalueParse;
+		this.decode = options?.decode ?? parse;
 
 		for (const channel in listeners) {
-			const { listener, parse } = listeners[channel];
+			const { listener, decode } = listeners[channel];
 
 			this.listeners[channel] = (e) => {
 				listener(
 					Object.assign(
 						{
-							data: (parse ?? this.parse)(e.data),
+							data: (decode ?? this.decode)(e.data),
 						},
 						e,
 					),
 				);
 			};
 
-			this.source.addEventListener(
-				channel,
-				this.listeners[channel],
-			);
+			this.source.addEventListener(channel, this.listeners[channel]);
 		}
 
-		this.source.onerror = on?.error ?? null;
+		this.source.onerror = options?.onError ?? null;
 
-		this.source.onopen = on?.open ?? null;
+		this.source.onopen = options?.onOpen ?? null;
 	}
 
 	public close() {

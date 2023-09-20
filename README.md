@@ -32,7 +32,7 @@ pnpm add @ghostebony/sse@next
 import { Server } from "@ghostebony/sse/server";
 
 export type ChannelData = {
-    "custom-channel-1": { id: number; ... };
+    "custom-channel-1": { id: number; createdAt: Date; ... };
     "custom-channel-2": { name: string; ... };
     ...
 };
@@ -50,10 +50,10 @@ const room = sse.room("custom-room-name");
 
 export const GET: RequestHandler = (event) =>
 	room.server(event.getClientAddress() /* or unique identifier */, {
-		connect({ user }) {
+        onConnect({ user }) {
 			...
 		},
-		disconnect({ user }) {
+        onDisconnect({ user }) {
 			...
 		},
 	});
@@ -86,9 +86,9 @@ sse.sendRoom(
     let eventSource: Client<Pick<ChannelData, "custom-channel-1" | ...>>;
 
     onMount(() => {
-        eventSource = new Client({
-            source: { url: "/sse" },
-            listeners: {
+        eventSource = new Client(
+            { url: "/sse" },
+            {
                 "custom-channel-1": {
                     listener({ data }) {
                         console.log(data);
@@ -96,7 +96,7 @@ sse.sendRoom(
                 },
                 ...
             },
-        });
+        );
 
         return () => eventSource?.close();
     });

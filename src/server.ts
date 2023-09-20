@@ -1,13 +1,14 @@
-import { stringify as devalueStringify } from "devalue";
+import { stringify } from "devalue";
 import type {
 	Channel,
 	ChannelData,
 	Controller,
+	ControllerEvents,
+	Encode,
 	MessageId,
 	OnAction,
 	RoomName,
 	RoomOptions,
-	Stringify,
 	User,
 } from "./types";
 
@@ -20,7 +21,7 @@ abstract class Storage {
 class Room<T extends ChannelData> {
 	public readonly users = new Map<User, Set<Controller>>();
 
-	public readonly stringify: Stringify = devalueStringify;
+	public readonly encode: Encode = stringify;
 
 	public readonly pingInterval = 10 * 60000;
 
@@ -29,8 +30,8 @@ class Room<T extends ChannelData> {
 		options?: RoomOptions,
 	) {
 		if (options) {
-			if (options.stringify) {
-				this.stringify = options.stringify;
+			if (options.encode) {
+				this.encode = options.encode;
 			}
 
 			if (options.pingInterval) {
@@ -39,14 +40,8 @@ class Room<T extends ChannelData> {
 		}
 	}
 
-	public server<TUser extends User>(
-		user: TUser,
-		on?: {
-			connect?: OnAction<TUser>;
-			disconnect?: OnAction<TUser>;
-		},
-	): Response {
-		return new Response(new ReadableStream(this.controller(user, on)), {
+	public server<TUser extends User>(user: TUser, events?: ControllerEvents<TUser>): Response {
+		return new Response(new ReadableStream(this.controller(user, events)), {
 			headers: {
 				connection: "keep-alive",
 				"cache-control": "no-store",
@@ -57,10 +52,7 @@ class Room<T extends ChannelData> {
 
 	private controller<TUser extends User>(
 		user: TUser,
-		on?: {
-			connect?: OnAction<TUser>;
-			disconnect?: OnAction<TUser>;
-		},
+		events?: ControllerEvents<TUser>,
 	): UnderlyingSource<unknown> {
 		let controller: Controller;
 		let ping: ReturnType<typeof setInterval>;
@@ -73,7 +65,7 @@ class Room<T extends ChannelData> {
 
 				this.addController(user, controller);
 
-				on?.connect?.({ user, controller });
+				events?.onConnect?.({ user, controller });
 
 				ping = setInterval(() => {
 					try {
@@ -81,14 +73,14 @@ class Room<T extends ChannelData> {
 					} catch {
 						clearInterval(ping);
 
-						this.cancelController(user, controller, on?.disconnect);
+						this.cancelController(user, controller, events?.onDisconnect);
 					}
 				}, this.pingInterval);
 			},
 			cancel: () => {
 				clearInterval(ping);
 
-				this.cancelController(user, controller, on?.disconnect);
+				this.cancelController(user, controller, events?.onDisconnect);
 			},
 		};
 	}
@@ -158,7 +150,7 @@ class Room<T extends ChannelData> {
 
 	private message<TChannel extends Channel>(id: MessageId, channel: TChannel, data: T[TChannel]) {
 		return textEncoder.encode(
-			`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${this.stringify(data)}\n\n`,
+			`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${this.encode(data)}\n\n`,
 		);
 	}
 }
