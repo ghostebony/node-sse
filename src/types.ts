@@ -29,6 +29,8 @@ export type RoomOptions = {
 	pingInterval?: number;
 };
 
+export type ClientSource = { url: string; init?: EventSourceInit };
+
 export type ClientOptions = {
 	decode?: Decode;
 	onError?: (this: EventSource, event: globalThis.Event) => any;
