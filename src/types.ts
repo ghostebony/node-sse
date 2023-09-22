@@ -42,6 +42,10 @@ export type ControllerEvents<TUser extends User> = {
 	onDisconnect?: OnAction<TUser>;
 };
 
+export type SendOptions = {
+	encode: Encode;
+};
+
 export type User = string | number;
 
 export type Channel = string | number;
