@@ -69,7 +69,7 @@ sse.sendRoom(
 	clientAddress /* or unique identifier */,
 	1, // message id (can be null)
 	"custom-channel-1", // channel that you're listening
-	data, // message data (types from ChannelData passed to ServerManager)
+	data, // message data (types from ChannelData passed to Server)
 );
 ```
 
@@ -83,7 +83,7 @@ sse.sendRoom(
     import type { ChannelData } from "$lib/server/sse";
     import { Client } from "@ghostebony/sse/client";
 
-    let eventSource: Client<Pick<ChannelData, "custom-channel-1" | ...>>;
+    let eventSource: Client<ChannelData, "custom-channel-1" | ...>;
 
     onMount(() => {
         eventSource = new Client(

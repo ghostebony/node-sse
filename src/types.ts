@@ -8,8 +8,8 @@ export type Listener<T> = {
 	// options?: boolean | AddEventListenerOptions;
 };
 
-export type Listeners<T extends ChannelData> = {
-	[TChannel in keyof T]: Listener<T[TChannel]>;
+export type Listeners<T extends ChannelData, K extends keyof T = keyof T> = {
+	[TChannel in K]: Listener<T[TChannel]>;
 };
 
 export type ChannelData = { [channel: string]: any };
