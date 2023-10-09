@@ -16,7 +16,7 @@
 		"build:clean": "pnpm clean && pnpm build",
 		"check": "tsc --noEmit"
 	},
-	"packageManager": "pnpm@8.7.5",
+	"packageManager": "pnpm@8.9.0",
 	"engines": {
 		"pnpm": ">=7"
 	},
