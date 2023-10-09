@@ -1,14 +1,21 @@
 import { parse } from "devalue";
 import type { ChannelData, ClientOptions, ClientSource, Decode, Listeners } from "./types";
 
-export class Client<T extends ChannelData, K extends keyof T = keyof T> {
+export class Client<
+	TChannelData extends ChannelData,
+	TChannel extends keyof TChannelData = keyof TChannelData,
+> {
 	public readonly source: EventSource;
 
 	public readonly decode: Decode;
 
 	private listeners: { [channel: string]: (e: MessageEvent<any>) => void } = {};
 
-	public constructor(source: ClientSource, listeners: Listeners<T, K>, options?: ClientOptions) {
+	public constructor(
+		source: ClientSource,
+		listeners: Listeners<TChannelData, TChannel>,
+		options?: ClientOptions,
+	) {
 		this.source = new EventSource(source.url, source.init);
 
 		this.decode = options?.decode ?? parse;

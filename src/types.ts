@@ -5,7 +5,6 @@ export type Encode = (data: any) => string;
 export type Listener<T> = {
 	listener: (event: MessageEvent<T>) => void;
 	decode?: Decode;
-	// options?: boolean | AddEventListenerOptions;
 };
 
 export type Listeners<T extends ChannelData, K extends keyof T = keyof T> = {
@@ -37,13 +36,9 @@ export type ClientOptions = {
 	onOpen?: (this: EventSource, event: globalThis.Event) => any;
 };
 
-export type ControllerEvents<TUser extends User> = {
-	onConnect?: OnAction<TUser>;
-	onDisconnect?: OnAction<TUser>;
-};
-
-export type SendOptions = {
-	encode: Encode;
+export type ControllerEvents<TChannelData extends ChannelData, TUser extends User> = {
+	onConnect?: OnAction<TChannelData, TUser>;
+	onDisconnect?: (connection: { user: TUser; send: Send<TChannelData> }) => void;
 };
 
 export type User = string | number;
@@ -54,7 +49,22 @@ export type MessageId = string | number | null;
 
 export type MessageData = Record<string | number, any>;
 
-export type OnAction<TUser extends User> = (connection: {
+export type OnAction<TChannelData extends ChannelData, TUser extends User> = (connection: {
 	user: TUser;
-	controller: Controller;
+	/**
+	 * close connection
+	 */
+	close: () => void;
+	send: Send<TChannelData>;
 }) => any;
+
+export type Send<TChannelData extends ChannelData> = <TChannel extends Channel>(
+	id: MessageId,
+	channel: TChannel,
+	data: TChannelData[TChannel],
+	options?: SendOptions,
+) => void;
+
+export type SendOptions = {
+	encode: Encode;
+};
