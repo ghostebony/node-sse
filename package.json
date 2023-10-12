@@ -7,7 +7,12 @@
 	"license": "MIT",
 	"repository": "github:ghostebony/node-sse",
 	"description": "Server-sent events server (response) and client",
-	"keywords": [],
+	"keywords": [
+		"nodejs",
+		"sse",
+		"svelte",
+		"sveltekit"
+	],
 	"scripts": {
 		"preinstall": "npx only-allow pnpm",
 		"build": "tsc --build",
