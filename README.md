@@ -48,7 +48,7 @@ export type ChannelData = {
 export const sse = new Server<ChannelData>();
 ```
 
-`src/sse/+server.ts`
+`src/routes/sse/+server.ts`
 
 ```ts
 import { sse } from "$lib/server/sse";
@@ -83,7 +83,7 @@ sse.sendRoom(
 
 #### client
 
-`src/+(page|layout).svelte`
+`src/routes/+(page|layout).svelte`
 
 ```svelte
 <script lang="ts">
