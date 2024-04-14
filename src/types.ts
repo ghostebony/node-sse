@@ -45,9 +45,53 @@ export type User = string | number;
 
 export type Channel = string | number;
 
-export type MessageId = string | number | null;
+export type MessageId = string | number;
 
 export type MessageData = Record<string | number, any>;
+
+export type Message<TChannelData extends ChannelData, TChannel extends Channel> = {
+	id?: MessageId;
+	channel: TChannel;
+	data: TChannelData[TChannel];
+};
+
+export type MessageUser<
+	TChannelData extends ChannelData,
+	TChannel extends Channel,
+	TUser extends User,
+> = Message<TChannelData, TChannel> & {
+	user: TUser;
+};
+
+export type MessageRoom<
+	TChannelData extends ChannelData,
+	TChannel extends Channel,
+	TUser extends User,
+> = MessageUser<TChannelData, TChannel, TUser> & {
+	room: RoomName;
+};
+
+export type MessageRoomEveryone<
+	TChannelData extends ChannelData,
+	TChannel extends Channel,
+> = Message<TChannelData, TChannel> & {
+	room: RoomName;
+};
+
+export type MessageMultiRoomChannel<
+	TChannelData extends ChannelData,
+	TChannel extends Channel,
+	TUser extends User,
+> = MessageUser<TChannelData, TChannel, TUser> & {
+	rooms: RoomName[];
+};
+
+export type MessageEveryoneMultiRoomChannel<
+	TChannelData extends ChannelData,
+	TChannel extends Channel,
+> = Message<TChannelData, TChannel> & {
+	rooms: RoomName[];
+};
 
 export type OnAction<TChannelData extends ChannelData, TUser extends User> = (connection: {
 	user: TUser;
@@ -59,9 +103,7 @@ export type OnAction<TChannelData extends ChannelData, TUser extends User> = (co
 }) => any;
 
 export type Send<TChannelData extends ChannelData> = <TChannel extends Channel>(
-	id: MessageId,
-	channel: TChannel,
-	data: TChannelData[TChannel],
+	message: Message<TChannelData, TChannel>,
 	options?: SendOptions,
 ) => void;
 

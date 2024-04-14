@@ -57,7 +57,7 @@ import type { RequestHandler } from "./$types";
 const room = sse.room("custom-room-name");
 
 export const GET: RequestHandler = (event) =>
-	room.server(event.getClientAddress() /* or unique identifier */, {
+	room.server(event.getClientAddress() /* or user unique identifier */, {
 		onConnect({ user, close, send }) {
 			// ...
 		},
@@ -72,13 +72,13 @@ somewhere on the server
 ```ts
 import { sse } from "$lib/server/sse";
 
-sse.sendRoom(
-	"custom-room-name",
-	clientAddress /* or unique identifier */,
-	1, // message id (can be null)
-	"custom-channel-1", // channel that you're listening
+sse.sendRoom({
+	room: "custom-room-name",
+	user: userId, // user unique identifier
+	id: 1, // message id (optional)
+	channel: "custom-channel-1", // channel that you're listening
 	data, // message data (types from ChannelData passed to Server)
-);
+});
 ```
 
 #### client
@@ -99,7 +99,7 @@ sse.sendRoom(
             {
                 "custom-channel-1": {
                     listener({ data }) {
-                        console.log(data);
+						// ...
                     },
                 },
                 // ...

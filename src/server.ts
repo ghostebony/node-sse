@@ -5,7 +5,12 @@ import type {
 	Controller,
 	ControllerEvents,
 	Encode,
-	MessageId,
+	Message,
+	MessageEveryoneMultiRoomChannel,
+	MessageMultiRoomChannel,
+	MessageRoom,
+	MessageRoomEveryone,
+	MessageUser,
 	OnAction,
 	RoomName,
 	RoomOptions,
@@ -19,8 +24,10 @@ abstract class Storage {
 	public static readonly rooms = new Map<RoomName, Room<ChannelData, User>>();
 }
 
-function message(id: MessageId, channel: Channel, data: any, encode: Encode) {
-	return encoder.encode(`${id ? `id: ${id}\n` : ""}event: ${channel}\ndata: ${encode(data)}\n\n`);
+function _message(message: Message<ChannelData, Channel>, encode: Encode) {
+	return encoder.encode(
+		`${message.id ? `id: ${message.id}\n` : ""}event: ${message.channel}\ndata: ${encode(message.data)}\n\n`,
+	);
 }
 
 export class StreamController<TChannelData extends ChannelData, TUser extends User = User> {
@@ -58,12 +65,10 @@ export class StreamController<TChannelData extends ChannelData, TUser extends Us
 				this.cancel();
 			},
 			send: <TChannel extends Channel>(
-				id: MessageId,
-				channel: TChannel,
-				data: TChannelData[TChannel],
-				options?: SendOptions | undefined,
+				message: Message<TChannelData, TChannel>,
+				options?: SendOptions,
 			) => {
-				this.send(id, channel, data, options);
+				this.send(message, options);
 			},
 		};
 
@@ -109,13 +114,11 @@ export class StreamController<TChannelData extends ChannelData, TUser extends Us
 	}
 
 	public send<TChannel extends Channel>(
-		id: MessageId,
-		channel: TChannel,
-		data: TChannelData[TChannel],
+		message: Message<TChannelData, TChannel>,
 		options?: SendOptions,
 	) {
 		try {
-			this.controller.enqueue(message(id, channel, data, options?.encode ?? this.encode));
+			this.controller.enqueue(_message(message, options?.encode ?? this.encode));
 		} catch {}
 	}
 
@@ -183,30 +186,26 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 	} as const;
 
 	public send<TChannel extends Channel>(
-		user: TUser,
-		id: MessageId,
-		channel: TChannel,
-		data: TChannelData[TChannel],
+		message: MessageUser<TChannelData, TChannel, TUser>,
 		options?: SendOptions,
 	) {
-		const controllers = this.controllers.get(user);
+		const controllers = this.controllers.get(message.user);
 
 		if (controllers) {
 			for (const controller of controllers) {
 				try {
-					controller.send(id, channel, data, options);
+					controller.send(message, options);
 				} catch {}
 			}
 		}
 	}
 
 	public sendEveryone<TChannel extends Channel>(
-		channel: TChannel,
-		data: TChannelData[TChannel],
+		message: Message<TChannelData, TChannel>,
 		options?: SendOptions,
 	) {
 		for (const user of this.users.keys()) {
-			this.send(user, null, channel, data, options);
+			this.send({ user, ...message }, options);
 		}
 	}
 }
@@ -240,48 +239,34 @@ export class Server<TChannelData extends ChannelData, TUser extends User = User>
 	} as const;
 
 	public sendRoom<TChannel extends Channel>(
-		room: RoomName,
-		user: TUser,
-		id: MessageId,
-		channel: TChannel,
-		data: TChannelData[TChannel],
+		message: MessageRoom<TChannelData, TChannel, TUser>,
 		options?: SendOptions,
 	) {
-		return Storage.rooms.get(room)?.send(user, id, channel, data, options);
+		return Storage.rooms.get(message.room)?.send(message, options);
 	}
 
 	public sendRoomEveryone<TChannel extends Channel>(
-		room: RoomName,
-		channel: TChannel,
-		data: TChannelData[TChannel],
+		message: MessageRoomEveryone<TChannelData, TChannel>,
 		options?: SendOptions,
 	) {
-		return Storage.rooms.get(room)?.sendEveryone(channel, data, options);
+		return Storage.rooms.get(message.room)?.sendEveryone(message, options);
 	}
 
 	public sendMultiRoomChannel<TUser extends User, TChannel extends Channel>(
-		rooms: RoomName[],
-		user: TUser,
-		id: MessageId,
-		channel: TChannel,
-		data: TChannelData[TChannel],
+		message: MessageMultiRoomChannel<TChannelData, TChannel, TUser>,
 		options?: SendOptions,
 	) {
-		for (const room of rooms) {
-			Storage.rooms.get(room)?.send(user, id, channel, data, options);
+		for (const room of message.rooms) {
+			Storage.rooms.get(room)?.send(message, options);
 		}
 	}
 
 	public sendEveryoneMultiRoomChannel<TChannel extends Channel>(
-		rooms: RoomName[],
-		channel: TChannel,
-		data: TChannelData[TChannel],
+		message: MessageEveryoneMultiRoomChannel<TChannelData, TChannel>,
 		options?: SendOptions,
 	) {
-		for (const room of rooms) {
-			Storage.rooms.get(room)?.sendEveryone(channel, data, options);
+		for (const room of message.rooms) {
+			Storage.rooms.get(room)?.sendEveryone(message, options);
 		}
 	}
 }
-
-export { Server as Servinator };
