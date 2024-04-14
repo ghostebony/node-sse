@@ -191,7 +191,7 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 	) {
 		const controllers = this.controllers.get(message.user);
 
-		if (controllers) {
+		if (controllers?.size) {
 			for (const controller of controllers) {
 				try {
 					controller.send(message, options);
