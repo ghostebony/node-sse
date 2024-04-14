@@ -1,4 +1,4 @@
-import { stringify } from "devalue";
+import { stringify } from 'devalue';
 import type {
 	Channel,
 	ChannelData,
@@ -16,7 +16,7 @@ import type {
 	RoomOptions,
 	SendOptions,
 	User,
-} from "./types";
+} from './types';
 
 const encoder = new TextEncoder();
 
@@ -24,9 +24,9 @@ abstract class Storage {
 	public static readonly rooms = new Map<RoomName, Room<ChannelData, User>>();
 }
 
-function _message(message: Message<ChannelData, Channel>, encode: Encode) {
+function _message(message: Message<ChannelData, Channel>, encode: Encode): Uint8Array {
 	return encoder.encode(
-		`${message.id ? `id: ${message.id}\n` : ""}event: ${message.channel}\ndata: ${encode(message.data)}\n\n`,
+		`${message.id ? `id: ${message.id}\n` : ''}event: ${message.channel}\ndata: ${encode(message.data)}\n\n`,
 	);
 }
 
@@ -100,7 +100,7 @@ export class StreamController<TChannelData extends ChannelData, TUser extends Us
 		};
 	}
 
-	public cancel(onDisconnect?: ControllerEvents<TChannelData, TUser>["onDisconnect"]) {
+	public cancel(onDisconnect?: ControllerEvents<TChannelData, TUser>['onDisconnect']): void {
 		clearInterval(this.ping);
 
 		onDisconnect?.({ user: this.user, send: this.onAction.send });
@@ -116,14 +116,14 @@ export class StreamController<TChannelData extends ChannelData, TUser extends Us
 	public send<TChannel extends Channel>(
 		message: Message<TChannelData, TChannel>,
 		options?: SendOptions,
-	) {
+	): void {
 		try {
 			this.controller.enqueue(_message(message, options?.encode ?? this.encode));
 		} catch {}
 	}
 
-	protected sendPing() {
-		return this.controller.enqueue(encoder.encode(`event: ping\ndata: ${Date.now()}\n\n`));
+	protected sendPing(): void {
+		this.controller.enqueue(encoder.encode(`event: ping\ndata: ${Date.now()}\n\n`));
 	}
 }
 
@@ -162,9 +162,9 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 
 		return new Response(new ReadableStream(controller), {
 			headers: {
-				connection: "keep-alive",
-				"cache-control": "no-store",
-				"content-type": "text/event-stream",
+				connection: 'keep-alive',
+				'cache-control': 'no-store',
+				'content-type': 'text/event-stream',
 			},
 		});
 	}
@@ -185,27 +185,39 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 		},
 	} as const;
 
+	/**
+	 * send a message to everyone in this room
+	 */
+	public send<TChannel extends Channel>(
+		message: Message<TChannelData, TChannel>,
+		options?: SendOptions,
+	): void;
+	/**
+	 * send a message to a specific user in this room
+	 */
 	public send<TChannel extends Channel>(
 		message: MessageUser<TChannelData, TChannel, TUser>,
 		options?: SendOptions,
-	) {
-		const controllers = this.controllers.get(message.user);
-
-		if (controllers?.size) {
-			for (const controller of controllers) {
-				try {
-					controller.send(message, options);
-				} catch {}
-			}
-		}
-	}
-
-	public sendEveryone<TChannel extends Channel>(
-		message: Message<TChannelData, TChannel>,
+	): void;
+	public send<TChannel extends Channel>(
+		message: Message<TChannelData, TChannel> | MessageUser<TChannelData, TChannel, TUser>,
 		options?: SendOptions,
-	) {
-		for (const user of this.users.keys()) {
-			this.send({ user, ...message }, options);
+	): void {
+		if ('user' in message) {
+			const controllers = this.controllers.get(message.user);
+
+			if (controllers?.size) {
+				for (const controller of controllers) {
+					try {
+						controller.send(message, options);
+					} catch {}
+				}
+			}
+		} else {
+
+			for (const user of this.users.keys()) {
+				this.send({ user, ...message }, options);
+			}
 		}
 	}
 }
@@ -227,46 +239,59 @@ export class Server<TChannelData extends ChannelData, TUser extends User = User>
 	}
 
 	public rooms = {
-		has(room: RoomName) {
+		has(room: RoomName): boolean {
 			return Storage.rooms.has(room);
 		},
 		get(room: RoomName): Room<TChannelData, TUser> | undefined {
 			return Storage.rooms.get(room) as any;
 		},
-		delete(room: RoomName) {
+		delete(room: RoomName): boolean {
 			return Storage.rooms.delete(room);
 		},
 	} as const;
 
-	public sendRoom<TChannel extends Channel>(
+	/**
+	 * send a message to a specific user in a specific room
+	 */
+	public send<TChannel extends Channel>(
 		message: MessageRoom<TChannelData, TChannel, TUser>,
 		options?: SendOptions,
-	) {
-		return Storage.rooms.get(message.room)?.send(message, options);
-	}
-
-	public sendRoomEveryone<TChannel extends Channel>(
+	): void;
+	/**
+	 * send a message to everyone in a specific room
+	 */
+	public send<TChannel extends Channel>(
 		message: MessageRoomEveryone<TChannelData, TChannel>,
 		options?: SendOptions,
-	) {
-		return Storage.rooms.get(message.room)?.sendEveryone(message, options);
-	}
-
-	public sendMultiRoomChannel<TUser extends User, TChannel extends Channel>(
+	): void;
+	/**
+	 * send a message to a specific user in multiple rooms
+	 */
+	public send<TChannel extends Channel, TUser extends User>(
 		message: MessageMultiRoomChannel<TChannelData, TChannel, TUser>,
 		options?: SendOptions,
-	) {
-		for (const room of message.rooms) {
-			Storage.rooms.get(room)?.send(message, options);
-		}
-	}
-
-	public sendEveryoneMultiRoomChannel<TChannel extends Channel>(
+	): void;
+	/**
+	 * send a message to everyone in multiple rooms
+	 */
+	public send<TChannel extends Channel>(
 		message: MessageEveryoneMultiRoomChannel<TChannelData, TChannel>,
 		options?: SendOptions,
-	) {
-		for (const room of message.rooms) {
-			Storage.rooms.get(room)?.sendEveryone(message, options);
+	): void;
+	public send<TChannel extends Channel, TUser extends User>(
+		message:
+			| MessageRoom<TChannelData, TChannel, TUser>
+			| MessageRoomEveryone<TChannelData, TChannel>
+			| MessageMultiRoomChannel<TChannelData, TChannel, TUser>
+			| MessageEveryoneMultiRoomChannel<TChannelData, TChannel>,
+		options?: SendOptions,
+	): void {
+		if ('room' in message) {
+			Storage.rooms.get(message.room)?.send(message, options);
+		} else {
+			for (const room of message.rooms) {
+				Storage.rooms.get(room)?.send(message, options);
+			}
 		}
 	}
 }

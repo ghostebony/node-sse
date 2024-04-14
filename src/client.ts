@@ -9,7 +9,7 @@ export class Client<
 
 	public readonly decode: Decode;
 
-	private listeners: { [channel: string]: (e: MessageEvent<any>) => void } = {};
+	private listeners: { [channel: string]: (e: MessageEvent) => void } = {};
 
 	public constructor(
 		source: ClientSource,
@@ -42,7 +42,7 @@ export class Client<
 		this.source.onopen = options?.onOpen ?? null;
 	}
 
-	public close() {
+	public close(): void {
 		for (const channel in this.listeners) {
 			this.source.removeEventListener(channel, this.listeners[channel]);
 		}
