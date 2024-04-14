@@ -29,15 +29,15 @@ pnpm add @ghostebony/sse@next
 `src/lib/server/sse.ts`
 
 ```ts
-import { Server } from "@ghostebony/sse/server";
+import { Server } from '@ghostebony/sse/server';
 
 export type ChannelData = {
-	"custom-channel-1": {
+	'custom-channel-1': {
 		id: number;
 		date: Date;
 		//...
 	};
-	"custom-channel-2": {
+	'custom-channel-2': {
 		name: string;
 		pattern: RegExp;
 		//...
@@ -51,10 +51,10 @@ export const sse = new Server<ChannelData>();
 `src/routes/sse/+server.ts`
 
 ```ts
-import { sse } from "$lib/server/sse";
-import type { RequestHandler } from "./$types";
+import { sse } from '$lib/server/sse';
+import type { RequestHandler } from './$types';
 
-const room = sse.room("custom-room-name");
+const room = sse.room('custom-room-name');
 
 export const GET: RequestHandler = (event) =>
 	room.server(event.getClientAddress() /* or user unique identifier */, {
@@ -70,13 +70,13 @@ export const GET: RequestHandler = (event) =>
 somewhere on the server
 
 ```ts
-import { sse } from "$lib/server/sse";
+import { sse } from '$lib/server/sse';
 
 sse.sendRoom({
-	room: "custom-room-name",
+	room: 'custom-room-name',
 	user: userId, // user unique identifier
 	id: 1, // message id (optional)
-	channel: "custom-channel-1", // channel that you're listening
+	channel: 'custom-channel-1', // channel that you're listening
 	data, // message data (types from ChannelData passed to Server)
 });
 ```

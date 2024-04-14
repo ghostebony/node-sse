@@ -1,10 +1,10 @@
 /** @type {import("prettier").Options} */
 export default {
 	useTabs: true,
-	singleQuote: false,
+	singleQuote: true,
 	printWidth: 100,
 	tabWidth: 4,
-	arrowParens: "always",
+	arrowParens: 'always',
 	bracketSpacing: true,
 	bracketSameLine: false,
 };

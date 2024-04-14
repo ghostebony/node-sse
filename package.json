@@ -19,6 +19,7 @@
 		"clean": "tsc --build --clean",
 		"build:watch": "tsc --build --watch",
 		"build:clean": "pnpm clean && pnpm build",
+		"format": "prettier --write .",
 		"check": "tsc --noEmit"
 	},
 	"packageManager": "pnpm@8.15.1",

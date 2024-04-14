@@ -1,5 +1,5 @@
-import { parse } from "devalue";
-import type { ChannelData, ClientOptions, ClientSource, Decode, Listeners } from "./types";
+import { parse } from 'devalue';
+import type { ChannelData, ClientOptions, ClientSource, Decode, Listeners } from './types';
 
 export class Client<
 	TChannelData extends ChannelData,
