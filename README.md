@@ -69,10 +69,12 @@ export const GET: RequestHandler = (event) =>
 
 somewhere on the server
 
+> `send` arguments change its behavior
+
 ```ts
 import { sse } from '$lib/server/sse';
 
-sse.sendRoom({
+sse.send({
 	room: 'custom-room-name',
 	user: userId, // user unique identifier
 	id: 1, // message id (optional)
