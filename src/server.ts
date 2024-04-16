@@ -5,9 +5,10 @@ import type {
 	Controller,
 	ControllerEvents,
 	Encode,
+	Expand,
 	Message,
-	MessageEveryoneMultiRoomChannel,
-	MessageMultiRoomChannel,
+	MessageMultiRoom,
+	MessageMultiRoomEveryone,
 	MessageRoom,
 	MessageRoomEveryone,
 	MessageUser,
@@ -30,7 +31,7 @@ function _message(message: Message<ChannelData, Channel>, encode: Encode): Uint8
 	);
 }
 
-export class StreamController<TChannelData extends ChannelData, TUser extends User = User> {
+class StreamController<TChannelData extends ChannelData, TUser extends User = User> {
 	public controller!: Controller;
 
 	public readonly encode: Encode = stringify;
@@ -45,7 +46,7 @@ export class StreamController<TChannelData extends ChannelData, TUser extends Us
 		public user: TUser,
 		private onStart: (user: TUser, controller: StreamController<TChannelData, TUser>) => void,
 		private onCancel: (user: TUser, controller: StreamController<TChannelData, TUser>) => void,
-		options?: RoomOptions,
+		options?: Expand<RoomOptions>,
 	) {
 		if (options) {
 			if (options.encode) {
@@ -58,7 +59,7 @@ export class StreamController<TChannelData extends ChannelData, TUser extends Us
 		}
 	}
 
-	public init(events?: ControllerEvents<TChannelData, TUser>): UnderlyingSource<unknown> {
+	public init(events?: Expand<ControllerEvents<TChannelData, TUser>>): UnderlyingSource<unknown> {
 		this.onAction = {
 			user: this.user,
 			close: () => {
@@ -114,8 +115,8 @@ export class StreamController<TChannelData extends ChannelData, TUser extends Us
 	}
 
 	public send<TChannel extends Channel>(
-		message: Message<TChannelData, TChannel>,
-		options?: SendOptions,
+		message: Expand<Message<TChannelData, TChannel>>,
+		options?: Expand<SendOptions>,
 	): void {
 		try {
 			this.controller.enqueue(_message(message, options?.encode ?? this.encode));
@@ -136,7 +137,7 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 
 	public constructor(
 		public name: RoomName,
-		options?: RoomOptions,
+		options?: Expand<RoomOptions>,
 	) {
 		if (options) {
 			if (options.encode) {
@@ -149,7 +150,7 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 		}
 	}
 
-	public server(user: TUser, events?: ControllerEvents<TChannelData, TUser>): Response {
+	public server(user: TUser, events?: Expand<ControllerEvents<TChannelData, TUser>>): Response {
 		const controller = new StreamController<TChannelData, TUser>(
 			user,
 			this.controllers.add,
@@ -189,15 +190,15 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 	 * send a message to everyone in this room
 	 */
 	public send<TChannel extends Channel>(
-		message: Message<TChannelData, TChannel>,
-		options?: SendOptions,
+		message: Expand<Message<TChannelData, TChannel>>,
+		options?: Expand<SendOptions>,
 	): void;
 	/**
 	 * send a message to a specific user in this room
 	 */
 	public send<TChannel extends Channel>(
-		message: MessageUser<TChannelData, TChannel, TUser>,
-		options?: SendOptions,
+		message: Expand<MessageUser<TChannelData, TChannel, TUser>>,
+		options?: Expand<SendOptions>,
 	): void;
 	public send<TChannel extends Channel>(
 		message: Message<TChannelData, TChannel> | MessageUser<TChannelData, TChannel, TUser>,
@@ -214,7 +215,6 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 				}
 			}
 		} else {
-
 			for (const user of this.users.keys()) {
 				this.send({ user, ...message }, options);
 			}
@@ -226,7 +226,7 @@ export class Server<TChannelData extends ChannelData, TUser extends User = User>
 	/**
 	 * if the room already exists, returns the existent room
 	 */
-	public room(room: RoomName, options?: RoomOptions): Room<TChannelData, TUser> {
+	public room(room: RoomName, options?: Expand<RoomOptions>): Room<TChannelData, TUser> {
 		if (Storage.rooms.has(room)) {
 			return Storage.rooms.get(room)! as any;
 		}
@@ -254,36 +254,36 @@ export class Server<TChannelData extends ChannelData, TUser extends User = User>
 	 * send a message to a specific user in a specific room
 	 */
 	public send<TChannel extends Channel>(
-		message: MessageRoom<TChannelData, TChannel, TUser>,
-		options?: SendOptions,
+		message: Expand<MessageRoom<TChannelData, TChannel, TUser>>,
+		options?: Expand<SendOptions>,
 	): void;
 	/**
 	 * send a message to everyone in a specific room
 	 */
 	public send<TChannel extends Channel>(
-		message: MessageRoomEveryone<TChannelData, TChannel>,
-		options?: SendOptions,
+		message: Expand<MessageRoomEveryone<TChannelData, TChannel>>,
+		options?: Expand<SendOptions>,
 	): void;
 	/**
 	 * send a message to a specific user in multiple rooms
 	 */
 	public send<TChannel extends Channel, TUser extends User>(
-		message: MessageMultiRoomChannel<TChannelData, TChannel, TUser>,
-		options?: SendOptions,
+		message: Expand<MessageMultiRoom<TChannelData, TChannel, TUser>>,
+		options?: Expand<SendOptions>,
 	): void;
 	/**
 	 * send a message to everyone in multiple rooms
 	 */
 	public send<TChannel extends Channel>(
-		message: MessageEveryoneMultiRoomChannel<TChannelData, TChannel>,
-		options?: SendOptions,
+		message: Expand<MessageMultiRoomEveryone<TChannelData, TChannel>>,
+		options?: Expand<SendOptions>,
 	): void;
 	public send<TChannel extends Channel, TUser extends User>(
 		message:
 			| MessageRoom<TChannelData, TChannel, TUser>
 			| MessageRoomEveryone<TChannelData, TChannel>
-			| MessageMultiRoomChannel<TChannelData, TChannel, TUser>
-			| MessageEveryoneMultiRoomChannel<TChannelData, TChannel>,
+			| MessageMultiRoom<TChannelData, TChannel, TUser>
+			| MessageMultiRoomEveryone<TChannelData, TChannel>,
 		options?: SendOptions,
 	): void {
 		if ('room' in message) {

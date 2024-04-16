@@ -1,3 +1,9 @@
+/**
+ * @internal
+ */
+
+export type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
+
 export type Decode = (text: string) => any;
 
 export type Encode = (data: any) => string;
@@ -78,7 +84,7 @@ export type MessageRoomEveryone<
 	room: RoomName;
 };
 
-export type MessageMultiRoomChannel<
+export type MessageMultiRoom<
 	TChannelData extends ChannelData,
 	TChannel extends Channel,
 	TUser extends User,
@@ -86,7 +92,7 @@ export type MessageMultiRoomChannel<
 	rooms: RoomName[];
 };
 
-export type MessageEveryoneMultiRoomChannel<
+export type MessageMultiRoomEveryone<
 	TChannelData extends ChannelData,
 	TChannel extends Channel,
 > = Message<TChannelData, TChannel> & {
