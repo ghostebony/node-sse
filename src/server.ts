@@ -7,6 +7,7 @@ import type {
 	Encode,
 	Expand,
 	Message,
+	MessageGeneric,
 	MessageMultiRoom,
 	MessageMultiRoomEveryone,
 	MessageRoom,
@@ -42,6 +43,8 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 
 	private onAction!: Parameters<OnAction<TChannelData, TUser>>[0];
 
+	private onMessage: ControllerEvents<TChannelData, TUser>['onMessage'] | undefined = undefined;
+
 	constructor(
 		public user: TUser,
 		private onStart: (user: TUser, controller: StreamController<TChannelData, TUser>) => void,
@@ -72,6 +75,8 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 				this.send(message, options);
 			},
 		};
+
+		this.onMessage = events?.onMessage;
 
 		return {
 			start: async (ctrl) => {
@@ -119,6 +124,16 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 	): void {
 		try {
 			this.controller.enqueue(_message(message, options?.encode ?? this.encode));
+
+			this.onMessage?.(
+				Object.assign(
+					{
+						message: message as MessageGeneric<TChannelData, TChannel, TUser>,
+						options,
+					},
+					this.onAction,
+				),
+			);
 		} catch {}
 	}
 
@@ -278,11 +293,7 @@ export class Server<TChannelData extends ChannelData, TUser extends User = User>
 		options?: Expand<SendOptions>,
 	): void;
 	public send<TChannel extends Channel, TUser extends User>(
-		message:
-			| MessageRoom<TChannelData, TChannel, TUser>
-			| MessageRoomEveryone<TChannelData, TChannel>
-			| MessageMultiRoom<TChannelData, TChannel, TUser>
-			| MessageMultiRoomEveryone<TChannelData, TChannel>,
+		message: MessageGeneric<TChannelData, TChannel, TUser>,
 		options?: SendOptions,
 	): void {
 		if ('room' in message) {

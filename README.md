@@ -61,6 +61,9 @@ export const GET: RequestHandler = (event) =>
 		onConnect({ user, close, send }) {
 			// ...
 		},
+		onMessage({ user, close, send, message, options }) {
+			// ...
+		},
 		onDisconnect({ user, send }) {
 			// ...
 		},
