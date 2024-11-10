@@ -111,7 +111,6 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 		} catch {}
 
 		this.onCancel(this.user, this);
-
 	}
 
 	public send<TChannel extends Channel>(
