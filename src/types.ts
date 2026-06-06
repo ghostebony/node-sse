@@ -7,15 +7,6 @@ export type Decode = (text: string) => any;
 
 export type Encode = (data: any) => string;
 
-export type Listener<T> = {
-	listener: (event: MessageEvent<T>) => void;
-	decode?: Decode;
-};
-
-export type Listeners<T extends ChannelData, K extends keyof T = keyof T> = {
-	[TChannel in K]: Listener<T[TChannel]>;
-};
-
 export type ChannelData = { [channel: Channel]: any };
 
 export type Controller = ReadableStreamController<unknown>;
