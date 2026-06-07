@@ -22,28 +22,30 @@ import type {
 
 const encoder = new TextEncoder();
 
+//#region Storage
 abstract class Storage {
 	public static readonly rooms = new Map<RoomName, Room<ChannelData, User>>();
 }
 
-function _message(message: Message<ChannelData, Channel>, encode: Encode): Uint8Array {
+function _message(message: Message<ChannelData, Channel>, encode: Encode) {
 	return encoder.encode(
 		`${message.id ? `id: ${message.id}\n` : ''}event: ${message.channel}\ndata: ${encode(message.data)}\n\n`,
 	);
 }
 
-class StreamController<TChannelData extends ChannelData, TUser extends User = User> {
+//#region StreamController
+class StreamController<TChannelData extends ChannelData, TUser extends User> {
 	public controller!: Controller;
 
 	public readonly encode: Encode = stringify;
 
 	public readonly pingInterval = 10 * 60000;
 
-	private ping!: ReturnType<typeof setInterval>;
+	#ping: ReturnType<typeof setInterval> | undefined;
 
-	private onAction!: Parameters<OnAction<TChannelData, TUser>>[0];
+	#onAction!: Parameters<OnAction<TChannelData, TUser>>[0];
 
-	private onMessage: ControllerEvents<TChannelData, TUser>['onMessage'] | undefined = undefined;
+	#onMessage: ControllerEvents<TChannelData, TUser>['onMessage'] | undefined = undefined;
 
 	constructor(
 		public user: TUser,
@@ -62,8 +64,9 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 		}
 	}
 
+	//#region init
 	public init(events?: Expand<ControllerEvents<TChannelData, TUser>>): UnderlyingSource<unknown> {
-		this.onAction = {
+		this.#onAction = {
 			user: this.user,
 			close: () => {
 				this.cancel();
@@ -76,7 +79,7 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 			},
 		};
 
-		this.onMessage = events?.onMessage;
+		this.#onMessage = events?.onMessage;
 
 		return {
 			start: async (ctrl) => {
@@ -86,15 +89,15 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 
 				this.onStart(this.user, this);
 
-				events?.onConnect?.(this.onAction);
+				events?.onConnect?.(this.#onAction);
 
-				clearInterval(this.ping);
+				clearInterval(this.#ping);
 
-				this.ping = setInterval(() => {
+				this.#ping = setInterval(() => {
 					try {
 						this.sendPing();
 					} catch {
-						clearInterval(this.ping);
+						clearInterval(this.#ping);
 
 						this.cancel(events?.onDisconnect);
 					}
@@ -106,10 +109,11 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 		};
 	}
 
+	//#region cancel
 	public cancel(onDisconnect?: ControllerEvents<TChannelData, TUser>['onDisconnect']): void {
-		clearInterval(this.ping);
+		clearInterval(this.#ping);
 
-		onDisconnect?.({ user: this.user, send: this.onAction.send });
+		onDisconnect?.({ user: this.user, send: this.#onAction.send });
 
 		try {
 			this.controller.close();
@@ -118,6 +122,7 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 		this.onCancel(this.user, this);
 	}
 
+	//#region send
 	public send<TChannel extends Channel>(
 		message: Expand<Message<TChannelData, TChannel>>,
 		options?: Expand<SendOptions>,
@@ -125,24 +130,26 @@ class StreamController<TChannelData extends ChannelData, TUser extends User = Us
 		try {
 			this.controller.enqueue(_message(message, options?.encode ?? this.encode));
 
-			this.onMessage?.(
+			this.#onMessage?.(
 				Object.assign(
 					{
 						message: message as MessageGeneric<TChannelData, TChannel, TUser>,
 						options,
 					},
-					this.onAction,
+					this.#onAction,
 				),
 			);
 		} catch {}
 	}
 
+	//#region sendPing
 	protected sendPing(): void {
 		this.controller.enqueue(encoder.encode(`event: ping\ndata: ${Date.now()}\n\n`));
 	}
 }
 
-class Room<TChannelData extends ChannelData, TUser extends User = User> {
+//#region Room
+class Room<TChannelData extends ChannelData, TUser extends User> {
 	public readonly users = new Map<TUser, Set<StreamController<TChannelData, TUser>>>();
 
 	public readonly encode: Encode = stringify;
@@ -164,6 +171,7 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 		}
 	}
 
+	//#region server
 	public server(user: TUser, events?: Expand<ControllerEvents<TChannelData, TUser>>): Response {
 		const controller = new StreamController<TChannelData, TUser>(
 			user,
@@ -184,13 +192,18 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 		});
 	}
 
+	//#region controllers
 	public controllers = {
 		add: (user: TUser, controller: StreamController<TChannelData, TUser>) => {
-			if (!this.users.has(user)) {
-				this.users.set(user, new Set());
+			let controllers = this.users.get(user);
+
+			if (!controllers) {
+				controllers = new Set();
+
+				this.users.set(user, controllers);
 			}
 
-			return this.users.get(user)!.add(controller);
+			return controllers.add(controller);
 		},
 		get: (user: TUser) => {
 			return this.users.get(user);
@@ -200,6 +213,7 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 		},
 	} as const;
 
+	//#region send
 	/**
 	 * send a message to everyone in this room
 	 */
@@ -228,42 +242,48 @@ class Room<TChannelData extends ChannelData, TUser extends User = User> {
 					} catch {}
 				}
 			}
-		} else {
-			for (const user of this.users.keys()) {
-				this.send({ user, ...message }, options);
-			}
+
+			return;
+		}
+
+		for (const user of this.users.keys()) {
+			this.send({ user, ...message }, options);
 		}
 	}
 }
 
-export class Server<TChannelData extends ChannelData, TUser extends User = User> {
+//#region Server
+export class Server<TChannelData extends ChannelData, TUser extends User> {
+	//#region room
 	/**
 	 * if the room already exists, returns the existent room
 	 */
 	public room(room: RoomName, options?: Expand<RoomOptions>): Room<TChannelData, TUser> {
 		if (Storage.rooms.has(room)) {
-			return Storage.rooms.get(room)! as any;
+			return Storage.rooms.get(room) as never;
 		}
 
 		const server = new Room<TChannelData, TUser>(room, options);
 
-		Storage.rooms.set(room, server as any);
+		Storage.rooms.set(room, server as never);
 
 		return server;
 	}
 
+	//#region rooms
 	public rooms = {
 		has(room: RoomName): boolean {
 			return Storage.rooms.has(room);
 		},
 		get(room: RoomName): Room<TChannelData, TUser> | undefined {
-			return Storage.rooms.get(room) as any;
+			return Storage.rooms.get(room) as never;
 		},
 		delete(room: RoomName): boolean {
 			return Storage.rooms.delete(room);
 		},
 	} as const;
 
+	//#region send
 	/**
 	 * send a message to a specific user in a specific room
 	 */
@@ -298,10 +318,12 @@ export class Server<TChannelData extends ChannelData, TUser extends User = User>
 	): void {
 		if ('room' in message) {
 			Storage.rooms.get(message.room)?.send(message, options);
-		} else {
-			for (const room of message.rooms) {
-				Storage.rooms.get(room)?.send(message, options);
-			}
+
+			return;
+		}
+
+		for (const room of message.rooms) {
+			Storage.rooms.get(room)?.send(message, options);
 		}
 	}
 }
