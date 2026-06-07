@@ -7,7 +7,7 @@ export type Decode = (text: string) => any;
 
 export type Encode = (data: any) => string;
 
-export type ChannelData = { [channel: Channel]: any };
+export type ChannelData = { [channel: Channel]: unknown };
 
 export type Controller = ReadableStreamController<unknown>;
 
@@ -49,11 +49,9 @@ export type ControllerEvents<TChannelData extends ChannelData, TUser extends Use
 
 export type User = string | number;
 
-export type Channel = string | number;
+export type Channel = string;
 
 export type MessageId = string | number;
-
-export type MessageData = Record<string | number, any>;
 
 export type Message<
 	TChannelData extends ChannelData,
