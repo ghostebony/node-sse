@@ -92,26 +92,22 @@ sse.send({
 
 ```svelte
 <script lang="ts">
-    import { onMount } from "svelte";
-    import type { ChannelData } from "$lib/server/sse";
-    import { Client } from "@ghostebony/sse/client";
+	import type { ChannelData } from '$lib/server/sse';
+	import { Client } from '@ghostebony/sse/client';
+	import { onMount } from 'svelte';
 
-    let eventSource: Client<ChannelData>;
+	let eventSource: Client<ChannelData>;
 
-    onMount(() => {
-        eventSource = new Client(
-            { url: "/sse" },
-            {
-                "custom-channel-1": {
-                    listener({ data }) {
-                        // ...
-                    },
-                },
-                // ...
-            },
-        );
+	onMount(() => {
+		eventSource = new Client({ url: '/sse' })
+			.on('custom-channel-1', (data) => {
+				// ...
+			})
+			.on('custom-channel-2', (data) => {
+				// ...
+			});
 
-        return () => eventSource?.close();
-    });
+		return () => eventSource?.close();
+	});
 </script>
 ```
