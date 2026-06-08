@@ -9,7 +9,29 @@ on:
     pull_request:
 
 jobs:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: latest
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Lint code
+              run: pnpm lint
+
     check:
+        needs: lint
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Repository
