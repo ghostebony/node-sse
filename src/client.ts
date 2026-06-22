@@ -41,6 +41,18 @@ export class Client<
 		return this;
 	}
 
+	public off(channel: TChannel): this {
+		const listener = this.#listeners.get(channel);
+
+		if (listener) {
+			this.source.removeEventListener(channel, listener);
+
+			this.#listeners.delete(channel);
+		}
+
+		return this;
+	}
+
 	public close(): void {
 		for (const [channel, listener] of this.#listeners) {
 			this.source.removeEventListener(channel, listener);
