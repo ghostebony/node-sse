@@ -1,7 +1,6 @@
 {
 	"name": "@ghostebony/sse",
 	"version": "1.0.0-next.13",
-	"main": "index.js",
 	"type": "module",
 	"author": "Pedro Américo",
 	"license": "MIT",
@@ -30,5 +29,10 @@
 		"@types/node": "^25.9.9",
 		"prettier": "^3.9.10",
 		"typescript": "^7.0.2"
+	},
+	"exports": {
+		"./client": "./dist/client.js",
+		"./server": "./dist/server.js",
+		"./types": "./dist/types.js"
 	}
 }
