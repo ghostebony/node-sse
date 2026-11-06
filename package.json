@@ -13,6 +13,9 @@
 		"svelte",
 		"sveltekit"
 	],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"prepublishOnly": "pnpm build",
 		"build": "tsc --build",
