@@ -14,12 +14,11 @@
 		"sveltekit"
 	],
 	"scripts": {
-		"preinstall": "npx only-allow pnpm",
 		"build": "node scripts/build",
 		"build:watch": "node scripts/build --watch",
-		"format": "prettier --write .",
 		"check": "tsc --noEmit",
-		"lint": "prettier --check ."
+		"lint": "prettier --check .",
+		"format": "prettier --write ."
 	},
 	"dependencies": {
 		"devalue": "^5.8.1"
