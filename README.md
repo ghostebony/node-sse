@@ -32,17 +32,17 @@ pnpm add @ghostebony/sse@next
 import { Server } from '@ghostebony/sse/server';
 
 export type ChannelData = {
-	'custom-channel-1': {
-		id: number;
-		date: Date;
-		//...
-	};
-	'custom-channel-2': {
-		name: string;
-		pattern: RegExp;
-		//...
-	};
-	// ...
+    'custom-channel-1': {
+        id: number;
+        date: Date;
+        //...
+    };
+    'custom-channel-2': {
+        name: string;
+        pattern: RegExp;
+        //...
+    };
+    // ...
 };
 
 export const sse = new Server<ChannelData>();
@@ -57,17 +57,17 @@ import type { RequestHandler } from './$types';
 const room = sse.room('custom-room-name');
 
 export const GET: RequestHandler = (event) =>
-	room.server(event.getClientAddress() /* or user unique identifier */, {
-		onConnect({ user, close, send }) {
-			// ...
-		},
-		onMessage({ user, close, send, message, options }) {
-			// ...
-		},
-		onDisconnect({ user, send }) {
-			// ...
-		}
-	});
+    room.server(event.getClientAddress() /* or user unique identifier */, {
+        onConnect({ user, close, send }) {
+            // ...
+        },
+        onMessage({ user, close, send, message, options }) {
+            // ...
+        },
+        onDisconnect({ user, send }) {
+            // ...
+        }
+    });
 ```
 
 somewhere on the server
@@ -78,11 +78,11 @@ somewhere on the server
 import { sse } from '$lib/server/sse';
 
 sse.send({
-	room: 'custom-room-name',
-	user: userId, // user unique identifier
-	id: 1, // message id (optional)
-	channel: 'custom-channel-1', // channel that you're listening
-	data // message data (types from ChannelData passed to Server)
+    room: 'custom-room-name',
+    user: userId, // user unique identifier
+    id: 1, // message id (optional)
+    channel: 'custom-channel-1', // channel that you're listening
+    data // message data (types from ChannelData passed to Server)
 });
 ```
 
@@ -92,22 +92,22 @@ sse.send({
 
 ```svelte
 <script lang="ts">
-	import type { ChannelData } from '$lib/server/sse';
-	import { Client } from '@ghostebony/sse/client';
-	import { onMount } from 'svelte';
+    import type { ChannelData } from '$lib/server/sse';
+    import { Client } from '@ghostebony/sse/client';
+    import { onMount } from 'svelte';
 
-	let eventSource: Client<ChannelData>;
+    let eventSource: Client<ChannelData>;
 
-	onMount(() => {
-		eventSource = new Client({ url: '/sse' })
-			.on('custom-channel-1', (data) => {
-				// ...
-			})
-			.on('custom-channel-2', (data) => {
-				// ...
-			});
+    onMount(() => {
+        eventSource = new Client({ url: '/sse' })
+            .on('custom-channel-1', (data) => {
+                // ...
+            })
+            .on('custom-channel-2', (data) => {
+                // ...
+            });
 
-		return () => eventSource?.close();
-	});
+        return () => eventSource?.close();
+    });
 </script>
 ```
