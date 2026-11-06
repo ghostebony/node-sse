@@ -14,18 +14,18 @@
 		"sveltekit"
 	],
 	"scripts": {
-		"build": "node scripts/build",
-		"build:watch": "node scripts/build --watch",
+		"prepublishOnly": "pnpm build",
+		"build": "tsc --build",
 		"check": "tsc --noEmit",
 		"lint": "prettier --check .",
 		"format": "prettier --write ."
 	},
 	"dependencies": {
-		"devalue": "^5.8.1"
+		"devalue": "^6.0.3"
 	},
 	"devDependencies": {
-		"@types/node": "^25.9.1",
-		"prettier": "^3.8.3",
-		"typescript": "^5.9.3"
+		"@types/node": "^25.9.9",
+		"prettier": "^3.9.10",
+		"typescript": "^7.0.2"
 	}
 }

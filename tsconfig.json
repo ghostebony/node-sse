@@ -5,11 +5,9 @@
 		"module": "ESNext",
 		"moduleResolution": "node",
 		"declaration": true,
+		"rootDir": "src",
 		"outDir": "dist",
 		"removeComments": false,
-		"verbatimModuleSyntax": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
 		"strict": true
 	},
 	"include": ["src"],

@@ -1,10 +1,9 @@
-/** @type {import('prettier').Config} */
-export default {
+/** @type {import("prettier").Config} */
+const config = {
 	useTabs: true,
 	singleQuote: true,
-	printWidth: 100,
-	tabWidth: 4,
-	arrowParens: 'always',
-	bracketSpacing: true,
-	bracketSameLine: false,
+	trailingComma: 'none',
+	printWidth: 100
 };
+
+export default config;
