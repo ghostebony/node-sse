@@ -1,57 +1,65 @@
 name: CI
 
 on:
-    push:
-        branches:
-            - main
-        tags-ignore:
-            - 'v*'
-    pull_request:
+  push:
+    branches: [main]
+    tags-ignore: ['v*']
+  pull_request:
+
+env:
+  NODE_VERSION: 26
+  PNPM_VERSION: 12
 
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
+  check:
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 10
+    runs-on: ubuntu-latest
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: latest
-                  cache: pnpm
+    permissions:
+      contents: read
 
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+    steps:
+      - &checkout
+        name: Checkout Repository
+        uses: actions/checkout@v7
 
-            - name: Lint code
-              run: pnpm lint
+      - &setup_pnpm
+        name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
-    check:
-        needs: lint
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
+      - &setup_node
+        name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 10
+      - &install
+        name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: latest
-                  cache: pnpm
+      - name: Check code
+        run: pnpm check
 
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+  lint:
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
 
-            - name: Check code
-              run: pnpm check
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - *checkout
+
+      - *setup_pnpm
+
+      - *setup_node
+
+      - *install
+
+      - name: Lint code
+        run: pnpm lint
