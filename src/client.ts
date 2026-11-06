@@ -3,7 +3,7 @@ import type { ChannelData, ClientOptions, ClientSource, Decode } from './types';
 
 export class Client<
 	TChannelData extends ChannelData,
-	TChannel extends Extract<keyof TChannelData, string> = Extract<keyof TChannelData, string>,
+	TChannel extends Extract<keyof TChannelData, string> = Extract<keyof TChannelData, string>
 > {
 	public readonly source: EventSource;
 
@@ -26,7 +26,7 @@ export class Client<
 		callback: (data: TChannelData[T], event: MessageEvent<unknown>) => void,
 		options?: {
 			decode?: Decode;
-		},
+		}
 	): this {
 		const decode = options?.decode ?? this.decode;
 

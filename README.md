@@ -66,7 +66,7 @@ export const GET: RequestHandler = (event) =>
 		},
 		onDisconnect({ user, send }) {
 			// ...
-		},
+		}
 	});
 ```
 
@@ -82,7 +82,7 @@ sse.send({
 	user: userId, // user unique identifier
 	id: 1, // message id (optional)
 	channel: 'custom-channel-1', // channel that you're listening
-	data, // message data (types from ChannelData passed to Server)
+	data // message data (types from ChannelData passed to Server)
 });
 ```
 

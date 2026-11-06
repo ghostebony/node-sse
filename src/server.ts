@@ -17,7 +17,7 @@ import type {
 	RoomName,
 	RoomOptions,
 	SendOptions,
-	User,
+	User
 } from './types';
 
 const encoder = new TextEncoder();
@@ -29,7 +29,7 @@ abstract class Storage {
 
 function _message(message: Message<ChannelData, Channel>, encode: Encode) {
 	return encoder.encode(
-		`${message.id ? `id: ${message.id}\n` : ''}event: ${message.channel}\ndata: ${encode(message.data)}\n\n`,
+		`${message.id ? `id: ${message.id}\n` : ''}event: ${message.channel}\ndata: ${encode(message.data)}\n\n`
 	);
 }
 
@@ -51,7 +51,7 @@ class StreamController<TChannelData extends ChannelData, TUser extends User> {
 		public user: TUser,
 		private onStart: (user: TUser, controller: StreamController<TChannelData, TUser>) => void,
 		private onCancel: (user: TUser, controller: StreamController<TChannelData, TUser>) => void,
-		options?: Expand<RoomOptions>,
+		options?: Expand<RoomOptions>
 	) {
 		if (options) {
 			if (options.encode) {
@@ -73,10 +73,10 @@ class StreamController<TChannelData extends ChannelData, TUser extends User> {
 			},
 			send: <TChannel extends Channel>(
 				message: Message<TChannelData, TChannel>,
-				options?: SendOptions,
+				options?: SendOptions
 			) => {
 				this.send(message, options);
-			},
+			}
 		};
 
 		this.#onMessage = events?.onMessage;
@@ -105,7 +105,7 @@ class StreamController<TChannelData extends ChannelData, TUser extends User> {
 			},
 			cancel: () => {
 				this.cancel(events?.onDisconnect);
-			},
+			}
 		};
 	}
 
@@ -125,7 +125,7 @@ class StreamController<TChannelData extends ChannelData, TUser extends User> {
 	//#region send
 	public send<TChannel extends Channel>(
 		message: Expand<Message<TChannelData, TChannel>>,
-		options?: Expand<SendOptions>,
+		options?: Expand<SendOptions>
 	): void {
 		try {
 			this.controller.enqueue(_message(message, options?.encode ?? this.encode));
@@ -134,10 +134,10 @@ class StreamController<TChannelData extends ChannelData, TUser extends User> {
 				Object.assign(
 					{
 						message: message as MessageGeneric<TChannelData, TChannel, TUser>,
-						options,
+						options
 					},
-					this.#onAction,
-				),
+					this.#onAction
+				)
 			);
 		} catch {}
 	}
@@ -158,7 +158,7 @@ class Room<TChannelData extends ChannelData, TUser extends User> {
 
 	public constructor(
 		public name: RoomName,
-		options?: Expand<RoomOptions>,
+		options?: Expand<RoomOptions>
 	) {
 		if (options) {
 			if (options.encode) {
@@ -179,16 +179,16 @@ class Room<TChannelData extends ChannelData, TUser extends User> {
 			this.controllers.delete,
 			{
 				encode: this.encode,
-				pingInterval: this.pingInterval,
-			},
+				pingInterval: this.pingInterval
+			}
 		).init(events);
 
 		return new Response(new ReadableStream(controller), {
 			headers: {
 				connection: 'keep-alive',
 				'cache-control': 'no-store',
-				'content-type': 'text/event-stream',
-			},
+				'content-type': 'text/event-stream'
+			}
 		});
 	}
 
@@ -210,7 +210,7 @@ class Room<TChannelData extends ChannelData, TUser extends User> {
 		},
 		delete: (user: TUser, controller: StreamController<TChannelData, TUser>) => {
 			return this.controllers.get(user)?.delete(controller);
-		},
+		}
 	} as const;
 
 	//#region send
@@ -219,18 +219,18 @@ class Room<TChannelData extends ChannelData, TUser extends User> {
 	 */
 	public send<TChannel extends Channel>(
 		message: Expand<Message<TChannelData, TChannel>>,
-		options?: Expand<SendOptions>,
+		options?: Expand<SendOptions>
 	): void;
 	/**
 	 * send a message to a specific user in this room
 	 */
 	public send<TChannel extends Channel>(
 		message: Expand<MessageUser<TChannelData, TChannel, TUser>>,
-		options?: Expand<SendOptions>,
+		options?: Expand<SendOptions>
 	): void;
 	public send<TChannel extends Channel>(
 		message: Message<TChannelData, TChannel> | MessageUser<TChannelData, TChannel, TUser>,
-		options?: SendOptions,
+		options?: SendOptions
 	): void {
 		if ('user' in message) {
 			const controllers = this.controllers.get(message.user);
@@ -280,7 +280,7 @@ export class Server<TChannelData extends ChannelData, TUser extends User> {
 		},
 		delete(room: RoomName): boolean {
 			return Storage.rooms.delete(room);
-		},
+		}
 	} as const;
 
 	//#region send
@@ -289,32 +289,32 @@ export class Server<TChannelData extends ChannelData, TUser extends User> {
 	 */
 	public send<TChannel extends Channel>(
 		message: Expand<MessageRoom<TChannelData, TChannel, TUser>>,
-		options?: Expand<SendOptions>,
+		options?: Expand<SendOptions>
 	): void;
 	/**
 	 * send a message to everyone in a specific room
 	 */
 	public send<TChannel extends Channel>(
 		message: Expand<MessageRoomEveryone<TChannelData, TChannel>>,
-		options?: Expand<SendOptions>,
+		options?: Expand<SendOptions>
 	): void;
 	/**
 	 * send a message to a specific user in multiple rooms
 	 */
 	public send<TChannel extends Channel, TUser extends User>(
 		message: Expand<MessageMultiRoom<TChannelData, TChannel, TUser>>,
-		options?: Expand<SendOptions>,
+		options?: Expand<SendOptions>
 	): void;
 	/**
 	 * send a message to everyone in multiple rooms
 	 */
 	public send<TChannel extends Channel>(
 		message: Expand<MessageMultiRoomEveryone<TChannelData, TChannel>>,
-		options?: Expand<SendOptions>,
+		options?: Expand<SendOptions>
 	): void;
 	public send<TChannel extends Channel, TUser extends User>(
 		message: MessageGeneric<TChannelData, TChannel, TUser>,
-		options?: SendOptions,
+		options?: SendOptions
 	): void {
 		if ('room' in message) {
 			Storage.rooms.get(message.room)?.send(message, options);

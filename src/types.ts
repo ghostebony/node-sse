@@ -42,7 +42,7 @@ export type ControllerEvents<TChannelData extends ChannelData, TUser extends Use
 				}[keyof TChannelData];
 				options?: Expand<SendOptions>;
 			}
-		>,
+		>
 	) => void;
 	onDisconnect?: (connection: { user: TUser; send: Send<TChannelData> }) => void;
 };
@@ -55,7 +55,7 @@ export type MessageId = string | number;
 
 export type Message<
 	TChannelData extends ChannelData,
-	TChannel extends keyof TChannelData = keyof TChannelData,
+	TChannel extends keyof TChannelData = keyof TChannelData
 > = {
 	id?: MessageId;
 	channel: TChannel;
@@ -65,7 +65,7 @@ export type Message<
 export type MessageGeneric<
 	TChannelData extends ChannelData,
 	TChannel extends keyof TChannelData,
-	TUser extends User,
+	TUser extends User
 > =
 	| MessageRoom<TChannelData, TChannel, TUser>
 	| MessageRoomEveryone<TChannelData, TChannel>
@@ -75,7 +75,7 @@ export type MessageGeneric<
 export type MessageUser<
 	TChannelData extends ChannelData,
 	TChannel extends keyof TChannelData,
-	TUser extends User,
+	TUser extends User
 > = Message<TChannelData, TChannel> & {
 	user: TUser;
 };
@@ -83,14 +83,14 @@ export type MessageUser<
 export type MessageRoom<
 	TChannelData extends ChannelData,
 	TChannel extends keyof TChannelData,
-	TUser extends User,
+	TUser extends User
 > = MessageUser<TChannelData, TChannel, TUser> & {
 	room: RoomName;
 };
 
 export type MessageRoomEveryone<
 	TChannelData extends ChannelData,
-	TChannel extends keyof TChannelData,
+	TChannel extends keyof TChannelData
 > = Message<TChannelData, TChannel> & {
 	room: RoomName;
 };
@@ -98,14 +98,14 @@ export type MessageRoomEveryone<
 export type MessageMultiRoom<
 	TChannelData extends ChannelData,
 	TChannel extends keyof TChannelData,
-	TUser extends User,
+	TUser extends User
 > = MessageUser<TChannelData, TChannel, TUser> & {
 	rooms: RoomName[];
 };
 
 export type MessageMultiRoomEveryone<
 	TChannelData extends ChannelData,
-	TChannel extends keyof TChannelData,
+	TChannel extends keyof TChannelData
 > = Message<TChannelData, TChannel> & {
 	rooms: RoomName[];
 };
@@ -121,7 +121,7 @@ export type OnAction<TChannelData extends ChannelData, TUser extends User> = (co
 
 export type Send<TChannelData extends ChannelData> = <TChannel extends Channel>(
 	message: Message<TChannelData, TChannel>,
-	options?: SendOptions,
+	options?: SendOptions
 ) => void;
 
 export type SendOptions = {
